@@ -24,7 +24,14 @@ that change. Cache coherence is the discipline which ensures that the changes
 in the values of shared operands(data) are propagated throughout the system in
 a timely fashion.
 
+There is two protocols for this:
+1. Invalidation protocol - sends an invalidation to all other caches that says
+   that this data set has been changed. 
+2. Update protocol - Sends the updated value of the memory to the other
+   caches. 
 
+The sooner is today prefered because, surpriseingly enough, it is faster.
+</br>
 **requirements**:
 
 * **write propagation** - Changes to the data in any cache must be propagated
@@ -93,6 +100,12 @@ by Unix-y operating systems. When you write your programs to rely on POSIX
 standards, you can be pretty sure to be able to port them easily among a large
 family of Unix derivatives.
 
+**The main issues of multicore programming**:
+* Program correctness - The computer executes the program in a correct way.
+* Load imbalance - All threads has the same amount of work to do. (else you'll
+  be waisting resources on ideling threads.)
+* Cache issues - create a program that exploits the cahes well so there will
+  be as few cahe misses as possible. 
 
 ### Pthreads 
 pthreads is a thread management interface in the POSIXs standard, it defines how
@@ -249,7 +262,6 @@ following conditions:
   to release the resource.  
   
 ## Memory Consistency models 
-  
 ### Atomic 
 An operation acting on shared memory is atomic if it completes in a single
 step relative to other threads. This means that a load and write operation to
@@ -300,6 +312,21 @@ Mutual exclusion will still be guaranteed as neither process can become
 critical before setting their flag.
 
 **Dekker's algorithm only works with Sequential consistency**. 
+#### Hardware optimizations
+**Write buffer with read bypass** - The hardware places write operations in a
+queue and are dealt with accordingly but read operations take precedence and
+will be executed before the queued writes.
+This will break the rules of Sequential consistency by destroying
+the atomicity and there by the sequential order. </br>
+
+**Overlapping writes** - Several writes can be performed at the same time.
+This will break Sequential consistency because the program order can be changed.</br>
+
+**Non blocking reads** - You can read several values at the same time. This
+combined with speculative execution can lead to a process reads a value inside
+a if statement it is "not allowed to" this also breaks the program order and
+thereby the sequential consistency. 
+
 #### increment
 An example of post increment:
 ```c
